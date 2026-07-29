@@ -1,25 +1,64 @@
-import { Sequelize } from "sequelize";
+import Role from "./role.model.js";
+import User from "./user.model.js";
+import UserRole from "./user-role.model.js";
+import Permission from "./permission.model.js";
+import RolePermission from "./role-permission.model.js";
+import RefreshToken from "./refresh-token.model.js";
 
-import configs from "../config/database.config.js";
 
-const env = process.env.NODE_ENV || "development";
-const config = configs[env];
-
-export const sequelize = new Sequelize(
-  config.database,
-  config.username,
-  config.password,
-  config
+Role.belongsToMany(
+  User, 
+  { 
+    through: UserRole, 
+    foreignKey: "roleId", 
+    otherKey: "userId" 
+  }
+);
+User.belongsToMany(
+  Role, 
+  { 
+    through: UserRole, 
+    foreignKey:"userId", 
+    otherKey: "roleId" 
+  }
 );
 
-const db = {};
+Role.belongsToMany(
+  Permission, 
+  { 
+    through: RolePermission,
+    foreignKey: "roleId",
+    otherKey: "permissionId"
+  }
+);
+Permission.belongsToMany(
+  Role, 
+  { 
+    through: RolePermission,
+    foreignKey: "permissionId",
+    otherKey: "roleId"
+  }
+);
 
-for (const model of Object.values(db)) {
-  if (typeof model.associate === "function") model.associate(db);
-}
+User.hasMany(
+  RefreshToken, 
+  {
+    foreignKey: "userId"
+  }
+);
 
-db.sequelize = sequelize; // connection instance — raw queries, transactions
-db.Sequelize = Sequelize; // class — Op, QueryTypes, fn/col/literal
+RefreshToken.belongsTo(
+  User,
+  {
+    foreignKey: "userId"
+  }
+);
 
-export { Sequelize };
-export default db;
+export { 
+  User, 
+  Role, 
+  UserRole, 
+  Permission, 
+  RolePermission, 
+  RefreshToken
+};
