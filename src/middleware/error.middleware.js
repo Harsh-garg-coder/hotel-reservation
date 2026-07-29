@@ -1,5 +1,8 @@
+import logger from "../config/logger.config";
+
 export default function genericErrorHandler(err, req, res, next) {
-    res.status(err.statusCode).json({
+    logger.error(err.message, err);
+    res.status(err.statusCode || 500).json({
         message: err.message,
         success: false
     });

@@ -1,16 +1,20 @@
 import { BadRequestError } from "../utils/errors/app.error.js";
-import { findUserByEmail } from "./user.service.js"
+import { createUserService, findUserByEmail } from "./user.service.js"
+import bcrypt from "bcrypt";
 
 export const signupService = async (signupData) => {
-    // check if the email is already present or not
-    const user = await findUserByEmail(signupData.email);
+    const { email, password, name } = signupData;
+    const user = await findUserByEmail(email);
 
-    throw new BadRequestError("User is already present");
-    // if(user) {
-        
-    // }
-    // if email is present return response according to that
-    // if email is not present then create a user
-        // hash password
-        // create user  
+    if(user) {
+        throw new BadRequestError("User is already present");
+    } else {
+        const hashedPassword = await bcrypt.hash(password, 12)
+        const newUser = await createUserService({
+            email,
+            password: hashedPassword,
+            name
+        })
+        return newUser;
+    }
 }

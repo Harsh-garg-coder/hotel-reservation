@@ -5,6 +5,7 @@ import logger from "./config/logger.config.js";
 import { attachCorrelationId } from "./middleware/correlation.middleware.js";
 import logRequest from "./middleware/log-request.middleware.js";
 import genericErrorHandler from "./middleware/error.middleware.js";
+import authRouter from "./routers/auth.router.js";
 
 const app = express();
 
@@ -19,6 +20,8 @@ try {
     logger.error("Error in connecting to database", err);
     process.exit(1);
 }
+
+app.use("/api/auth", authRouter);
 
 app.use(genericErrorHandler);
 

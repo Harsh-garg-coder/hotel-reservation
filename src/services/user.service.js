@@ -9,4 +9,5 @@ export const createUserService = async (userData) => {
 
 export const findUserByEmail = async (email) => {
     const user = await userRepository.findByEmail(email);
+    return user;
 }
