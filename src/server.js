@@ -5,12 +5,13 @@ import logger from "./config/logger.config.js";
 import { attachCorrelationId } from "./middleware/correlation.middleware.js";
 import logRequest from "./middleware/log-request.middleware.js";
 import genericErrorHandler from "./middleware/error.middleware.js";
+import notFoundHandler from "./middleware/not-found.middleware.js";
 import authRouter from "./routers/auth.router.js";
 
 const app = express();
 
+app.use(attachCorrelationId);   // sabse pehle — taaki body-parse errors ko bhi ID mile
 app.use(express.json());
-app.use(attachCorrelationId);
 app.use(logRequest);
 
 try {
@@ -23,6 +24,7 @@ try {
 
 app.use("/api/auth", authRouter);
 
+app.use(notFoundHandler);
 app.use(genericErrorHandler);
 
 app.listen(serverConfig.PORT, () => {

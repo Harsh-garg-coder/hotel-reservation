@@ -1,26 +1,34 @@
-export class InternalServerError extends Error {
-    constructor(message) {
-        super();
-        this.name = "InternalServerError";
-        this.statusCode = 500;
-        this.message = message;
+export class AppError extends Error {
+    constructor(message, statusCode = 500, errors = undefined) {
+        super(message);
+        this.name = this.constructor.name;
+        this.statusCode = statusCode;
+        this.errors = errors;
+        this.isOperational = true;
+        Error.captureStackTrace(this, this.constructor);
     }
 }
 
-export class NotFoundError extends Error {
-    constructor(message) {
-        super();
-        this.name = "NotFoundError";
-        this.statusCode = 404;
-        this.message = message;
+export class BadRequestError extends AppError {
+    constructor(message = "Bad request", errors) {
+        super(message, 400, errors);
     }
 }
 
-export class BadRequestError extends Error {
-    constructor(message) {
-        super();
-        this.name = "BadRequestError";
-        this.statusCode = 400;
-        this.message = message;
+export class NotFoundError extends AppError {
+    constructor(message = "Resource not found") {
+        super(message, 404);
+    }
+}
+
+export class ConflictError extends AppError {
+    constructor(message = "Resource already exists") {
+        super(message, 409);
+    }
+}
+
+export class InternalServerError extends AppError {
+    constructor(message = "Internal server error") {
+        super(message, 500);
     }
 }
