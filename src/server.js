@@ -4,6 +4,7 @@ import sequelize from "./models/sequelize.js";
 import logger from "./config/logger.config.js";
 import { attachCorrelationId } from "./middleware/correlation.middleware.js";
 import logRequest from "./middleware/log-request.middleware.js";
+import genericErrorHandler from "./middleware/error.middleware.js";
 
 const app = express();
 
@@ -18,6 +19,8 @@ try {
     logger.error("Error in connecting to database", err);
     process.exit(1);
 }
+
+app.use(genericErrorHandler);
 
 app.listen(serverConfig.PORT, () => {
     logger.info(`Server is listening on port: ${serverConfig.PORT}`);
