@@ -1,3 +1,4 @@
+import { addEmailToQueue } from "../producers/mailer.producer.js";
 import { ConflictError } from "../utils/errors/app.error.js";
 import { createUserService, findUserByEmail } from "./user.service.js"
 import bcrypt from "bcrypt";
@@ -14,7 +15,16 @@ export const signupService = async (signupData) => {
             email,
             password: hashedPassword,
             name
-        })
+        });
+        await addEmailToQueue({
+            to: email,
+            templateId: "welcome",
+            subject: "Welcome to Hotel Reservation!",
+            params: {
+                name,
+                appName: "Hotel Reservation"
+            }
+        });
         return newUser;
     }
 }

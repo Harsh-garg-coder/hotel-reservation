@@ -8,7 +8,8 @@
     "migration:generate": "sequelize-cli migration:generate --name",
     "db:migrate": "sequelize-cli db:migrate",
     "db:migrate:undo": "sequelize-cli db:migrate:undo",
-    "db:seed": "sequelize-cli db:seed:all"
+    "db:seed": "sequelize-cli db:seed:all",
+    "workers": "nodemon ./src/workers/index.js"
   },
   "repository": {
     "type": "git",
@@ -24,9 +25,13 @@
   "description": "",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "bullmq": "^6.0.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "handlebars": "^4.7.9",
+    "ioredis": "^5.11.1",
     "mysql2": "^3.23.2",
+    "nodemailer": "^9.0.3",
     "nodemon": "^3.1.14",
     "sequelize": "^6.37.8",
     "uuid": "^14.0.1",
