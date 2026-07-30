@@ -1,5 +1,5 @@
 import { serverConfig } from "../config/server.config.js";
-import { loginService, signupService } from "../services/auth.service.js"
+import { loginService, refreshService, signupService } from "../services/auth.service.js"
 
 const isDev = serverConfig.NODE_ENV === "development";
 
@@ -30,5 +30,28 @@ export const loginController = async (req, res) => {
 
     res.status(200).json({
         message: "Login successful!"
+    });
+}
+
+export const refreshController = async (req, res) => {
+    const { refresh_token: refreshToken } = req.cookies;
+    const { accessToken, newRefreshToken } = await refreshService(refreshToken);
+
+    res.cookie("access_token", accessToken, {
+        httpOnly: true,
+        secure: !isDev,
+        sameSite: true,
+        maxAge: 1000 * 60 * 15
+    });
+
+    res.cookie("refresh_token", newRefreshToken, {
+        httpOnly: true,
+        secure: !isDev,
+        sameSite: true,
+        maxAge: 1000 * 60 * 60 * 24 * 30
+    });
+
+    res.status(200).json({
+        message: "Refesh successful!"
     });
 }

@@ -1,9 +1,10 @@
 import { addEmailToQueue } from "../producers/mailer.producer.js";
-import { BadRequestError, ConflictError } from "../utils/errors/app.error.js";
+import { BadRequestError, ConflictError, UnAuthenticatedError } from "../utils/errors/app.error.js";
 import { createAccessToken, createRefreshToken } from "../utils/helpers/token.helpers.js";
-import { saveRefreshToken } from "./refresh-token.service.js";
+import { getRefreshTokenByToken, revokeRefreshTokenById, saveRefreshToken } from "./refresh-token.service.js";
 import { createUserService, findUserByEmail } from "./user.service.js"
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 
 export const signupService = async (signupData) => {
     const { email, password, name } = signupData;
@@ -48,13 +49,50 @@ export const loginService = async (loginData) => {
 
     const accessToken = createAccessToken(user.id);
     const refreshToken = createRefreshToken(user.id);
-    const hashedRefreshToken = await bcrypt.hash(refreshToken, 12);
+    const hashedRefreshToken = crypto.createHash("sha256").update(refreshToken).digest("hex");
 
     await saveRefreshToken({
-        token: refreshToken,
+        token: hashedRefreshToken,
         userId: user?.id,
         expiresAt: Date.now() + (1000 * 60 * 60 * 24 * 30)
     });
 
     return { accessToken, refreshToken };
+}
+
+export const refreshService = async (token) => {
+    if(!token) {
+        throw new UnAuthenticatedError();
+        return;
+    }
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    const refreshToken = await getRefreshTokenByToken(hashedToken);
+    console.log(refreshToken, "refreshToken", hashedToken);
+    if(!refreshToken) {
+        throw new UnAuthenticatedError();
+        return;
+    }
+
+    const isTokenExpired = refreshToken.expiresAt < Date.now();
+    const isTokenRevoked = refreshToken.revokedAt !== null;
+
+    if(isTokenExpired || isTokenRevoked) {
+        throw new UnAuthenticatedError();
+        return;
+    }
+    
+    // token is present and valid
+    const accessToken = createAccessToken(refreshToken?.userId);
+    const newRefreshToken = createRefreshToken(refreshToken?.userId);
+    const newHashedRefreshToken = crypto.createHash("sha256").update(newRefreshToken).digest("hex");
+
+    await saveRefreshToken({
+        token: newHashedRefreshToken,
+        userId: refreshToken?.userId,
+        expiresAt: Date.now() + (1000 * 60 * 60 * 24 * 30)
+    });
+    await revokeRefreshTokenById(refreshToken.id);
+
+    return { accessToken, newRefreshToken }; 
 }

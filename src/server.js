@@ -7,11 +7,13 @@ import logRequest from "./middleware/log-request.middleware.js";
 import genericErrorHandler from "./middleware/error.middleware.js";
 import notFoundHandler from "./middleware/not-found.middleware.js";
 import authRouter from "./routers/auth.router.js";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
 app.use(attachCorrelationId);   // sabse pehle — taaki body-parse errors ko bhi ID mile
 app.use(express.json());
+app.use(cookieParser());
 app.use(logRequest);
 
 try {

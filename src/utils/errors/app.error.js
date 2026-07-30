@@ -32,3 +32,9 @@ export class InternalServerError extends AppError {
         super(message, 500);
     }
 }
+
+export class UnAuthenticatedError extends AppError {
+    constructor(message = "UnAuthenticated") {
+        super(message, 401);
+    }
+}
