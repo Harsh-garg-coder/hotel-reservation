@@ -15,10 +15,10 @@ export default class RerfeshTokenRepository extends BaseRepository {
         return refreshToken;
     }
 
-    async revokeById(id) {
+    async revokeByToken(token) {
         const refreshToken = await this.model.findOne({
             where: {
-                id
+                token
             }
         });
         refreshToken.revokedAt = Date.now();

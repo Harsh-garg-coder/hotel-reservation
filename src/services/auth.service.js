@@ -1,7 +1,7 @@
 import { addEmailToQueue } from "../producers/mailer.producer.js";
 import { BadRequestError, ConflictError, UnAuthenticatedError } from "../utils/errors/app.error.js";
 import { createAccessToken, createRefreshToken } from "../utils/helpers/token.helpers.js";
-import { getRefreshTokenByToken, revokeRefreshTokenById, saveRefreshToken } from "./refresh-token.service.js";
+import { getRefreshTokenByToken, revokeRefreshTokenByToken, saveRefreshToken } from "./refresh-token.service.js";
 import { createUserService, findUserByEmail } from "./user.service.js"
 import bcrypt from "bcrypt";
 import crypto from "crypto";
@@ -49,10 +49,9 @@ export const loginService = async (loginData) => {
 
     const accessToken = createAccessToken(user.id);
     const refreshToken = createRefreshToken(user.id);
-    const hashedRefreshToken = crypto.createHash("sha256").update(refreshToken).digest("hex");
 
     await saveRefreshToken({
-        token: hashedRefreshToken,
+        token: refreshToken,
         userId: user?.id,
         expiresAt: Date.now() + (1000 * 60 * 60 * 24 * 30)
     });
@@ -66,9 +65,7 @@ export const refreshService = async (token) => {
         return;
     }
 
-    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-    const refreshToken = await getRefreshTokenByToken(hashedToken);
-    console.log(refreshToken, "refreshToken", hashedToken);
+    const refreshToken = await getRefreshTokenByToken(token);
     if(!refreshToken) {
         throw new UnAuthenticatedError();
         return;
@@ -85,14 +82,36 @@ export const refreshService = async (token) => {
     // token is present and valid
     const accessToken = createAccessToken(refreshToken?.userId);
     const newRefreshToken = createRefreshToken(refreshToken?.userId);
-    const newHashedRefreshToken = crypto.createHash("sha256").update(newRefreshToken).digest("hex");
 
     await saveRefreshToken({
-        token: newHashedRefreshToken,
+        token: newRefreshToken,
         userId: refreshToken?.userId,
         expiresAt: Date.now() + (1000 * 60 * 60 * 24 * 30)
     });
-    await revokeRefreshTokenById(refreshToken.id);
+    await revokeRefreshTokenByToken(token);
 
     return { accessToken, newRefreshToken }; 
+}
+
+export const logoutService = async (refreshToken) => {
+    if(!refreshToken) {
+        throw new UnAuthenticatedError();
+        return;
+    }
+
+    const refreshTokenRow = await getRefreshTokenByToken(refreshToken);
+    if(!refreshTokenRow) {
+        throw new UnAuthenticatedError();
+        return;
+    }
+
+    const isExpired = refreshTokenRow.expiresAt < Date.now();
+    const isRevoked = refreshTokenRow.revokedAt !== null;
+
+    if(isExpired || isRevoked) {
+        throw new UnAuthenticatedError();
+        return;
+    }
+
+    await revokeRefreshTokenByToken(refreshToken);
 }
